@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>ETS2 Vertical Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body { 
+      background:#0d0d0d; 
+      color:#f0f0f0; 
+      font-family:sans-serif; 
+      margin:0; 
+      padding:20px; 
+      display:flex; 
+      flex-direction:column; 
+      align-items:center;
+    }
+    h1 { 
+      text-align:center; 
+      color:#00ffcc; 
+      margin-bottom:20px;
+    }
+    .kpi {
+      background:#1a1a1a;
+      color:#00ffcc;
+      padding:20px;
+      border-radius:12px;
+      margin:10px 0;
+      width:90%;
+      text-align:center;
+      font-size:1.4em;
+      box-shadow:0 0 10px rgba(0,255,204,0.3);
+    }
+    canvas { 
+      background:#1a1a1a; 
+      border-radius:12px; 
+      margin:15px 0; 
+      padding:15px; 
+      width:90% !important; 
+      max-width:800px; 
+      height:400px !important; 
+      box-shadow:0 0 15px rgba(0,0,0,0.5);
+    }
+  </style>
+</head>
+<body>
+  <h1>🚛 FRXGZ Ultimate Company Dashboard 🚛</h1>
+  
+  <!-- KPIs -->
+  <div class="kpi" id="kpiTrucks">Loading trucks...</div>
+  <div class="kpi" id="kpiDrivers">Loading drivers...</div>
+  <div class="kpi" id="kpiIncome">Loading income...</div>
+  <div class="kpi" id="kpiFuel">Loading fuel...</div>
+  <div class="kpi" id="kpiGarages">Loading garages...</div>
+  <div class="kpi" id="kpiTrailers">Loading trailers...</div>
+
+  <!-- Charts -->
+  <canvas id="fuelChart"></canvas>
+  <canvas id="repairsChart"></canvas>
+  <canvas id="driverScoreChart"></canvas>
+  <canvas id="incomeChart"></canvas>
+
+  <script>
+  // === Helper function to fetch CSV ===
+  async function loadCSV(url) {
+    const response = await fetch(url);
+    const text = await response.text();
+    const rows = text.split("\n").map(r => r.split(","));
+    const headers = rows[0];
+    return rows.slice(1).map(r => {
+      let obj = {};
+      headers.forEach((h,i) => obj[h.trim()] = r[i]?.trim());
+      return obj;
+    });
+  }
+
+  // === Build Dashboard ===
+  async function buildDashboard() {
+    // 👇 Your real Google Sheets CSV links
+    const trucks = await loadCSV("https://docs.google.com/spreadsheets/d/e/2PACX-1vQ1EKJLZDK89CZ450PamnZQKpEmQMy6esrEdeU3w-SLrBHG0ENGnMOIw07NzUBIKw/pub?gid=146602917&single=true&output=csv");
+    const drivers = await loadCSV("https://docs.google.com/spreadsheets/d/e/2PACX-1vQ1EKJLZDK89CZ450PamnZQKpEmQMy6esrEdeU3w-SLrBHG0ENGnMOIw07NzUBIKw/pub?gid=1310443753&single=true&output=csv");
+    const garages = await loadCSV("https://docs.google.com/spreadsheets/d/e/2PACX-1vQ1EKJLZDK89CZ450PamnZQKpEmQMy6esrEdeU3w-SLrBHG0ENGnMOIw07NzUBIKw/pub?gid=1425443368&single=true&output=csv");
+    const trailers = await loadCSV("https://docs.google.com/spreadsheets/d/e/2PACX-1vQ1EKJLZDK89CZ450PamnZQKpEmQMy6esrEdeU3w-SLrBHG0ENGnMOIw07NzUBIKw/pub?gid=620180317&single=true&output=csv");
+
+    // === KPIs ===
+    const totalIncome = trucks.reduce((sum,t) => sum + parseFloat(t["Monthly Income"]||0), 0);
+    const avgFuel = trucks.reduce((sum,t) => sum + parseFloat(t["Fuel L/100km"]||0), 0) / (trucks.length || 1);
+
+    document.getElementById("kpiTrucks").innerText   = `🚚 Total Trucks: ${trucks.length}`;
+    document.getElementById("kpiDrivers").innerText  = `👨‍✈️ Total Drivers: ${drivers.length}`;
+    document.getElementById("kpiIncome").innerText   = `💰 Monthly Income: €${totalIncome.toLocaleString()}`;
+    document.getElementById("kpiFuel").innerText     = `⛽ Avg Fuel Consumption: ${avgFuel.toFixed(2)} L/100km`;
+    document.getElementById("kpiGarages").innerText  = `🏢 Garages: ${garages.length}`;
+    document.getElementById("kpiTrailers").innerText = `🚛 Trailers: ${trailers.length}`;
+
+    // === Charts ===
+    const labels = trucks.map(t => t["Model"]);
+    const fuelCosts = trucks.map(t => parseFloat(t["Est Monthly Fuel Cost"]||0));
+    const repairs = trucks.map(t => parseFloat(t["Repair / 12 (avg monthly)"]||0));
+    const income = trucks.map(t => parseFloat(t["Monthly Income"]||0));
+
+    // Fuel chart
+    new Chart(document.getElementById("fuelChart"), {
+      type: "bar",
+      data: { labels, datasets: [{ label:"Fuel (€)", data:fuelCosts, backgroundColor:"#ff4444" }] },
+      options: { plugins:{legend:{labels:{color:"#f0f0f0"}}}, scales:{x:{ticks:{color:"#f0f0f0"}}, y:{ticks:{color:"#f0f0f0"}}}}
+    });
+
+    // Repairs chart
+    new Chart(document.getElementById("repairsChart"), {
+      type: "bar",
+      data: { labels, datasets: [{ label:"Repairs (€)", data:repairs, backgroundColor:"#ffaa00" }] },
+      options: { plugins:{legend:{labels:{color:"#f0f0f0"}}}, scales:{x:{ticks:{color:"#f0f0f0"}}, y:{ticks:{color:"#f0f0f0"}}}}
+    });
+
+    // Driver score radar
+    new Chart(document.getElementById("driverScoreChart"), {
+      type: "radar",
+      data: {
+        labels: drivers.map(d => d["Name"]),
+        datasets: [{
+          label:"Driver Score",
+          data: drivers.map(d => parseFloat(d["Driver Score (0-100)"]||0)),
+          borderColor:"#ffaa00",
+          backgroundColor:"rgba(255,170,0,0.2)"
+        }]
+      },
+      options: { plugins:{legend:{labels:{color:"#f0f0f0"}}}, scales:{r:{pointLabels:{color:"#f0f0f0"}, ticks:{color:"#f0f0f0"}}}}
+    });
+
+    // Income chart
+    new Chart(document.getElementById("incomeChart"), {
+      type: "line",
+      data: { labels, datasets: [{ label:"Monthly Income (€)", data:income, borderColor:"#00ff66", backgroundColor:"rgba(0,255,102,0.2)" }] },
+      options: { plugins:{legend:{labels:{color:"#f0f0f0"}}}, scales:{x:{ticks:{color:"#f0f0f0"}}, y:{ticks:{color:"#f0f0f0"}}}}
+    });
+  }
+
+  // === Run the dashboard ===
+  buildDashboard();
+  </script>
+</body>
+</html>
