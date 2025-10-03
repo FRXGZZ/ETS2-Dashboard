@@ -46,7 +46,6 @@
 <body>
   <h1>🚛 FRXGZ Ultimate Company Dashboard 🚛</h1>
   
-  <!-- KPIs -->
   <div class="kpi" id="kpiTrucks">Loading trucks...</div>
   <div class="kpi" id="kpiDrivers">Loading drivers...</div>
   <div class="kpi" id="kpiIncome">Loading income...</div>
@@ -54,14 +53,12 @@
   <div class="kpi" id="kpiGarages">Loading garages...</div>
   <div class="kpi" id="kpiTrailers">Loading trailers...</div>
 
-  <!-- Charts -->
   <canvas id="fuelChart"></canvas>
   <canvas id="repairsChart"></canvas>
   <canvas id="driverScoreChart"></canvas>
   <canvas id="incomeChart"></canvas>
 
   <script>
-  // === Helper function to fetch CSV ===
   async function loadCSV(url) {
     const response = await fetch(url);
     const text = await response.text();
@@ -74,15 +71,12 @@
     });
   }
 
-  // === Build Dashboard ===
   async function buildDashboard() {
-    // 👇 Your real Google Sheets CSV links
-    const trucks = await loadCSV("https://docs.google.com/spreadsheets/d/e/2PACX-1vSq1GLbDENEZYWCjhdfY_lbazkfiEI6ISOffmP2QBOr_0gGAlRYaNc3uDQ22ZeHaaQa2UtOoXYDSYV2/pub?gid=146602917&single=true&output=csv");
-    const drivers = await loadCSV("https://docs.google.com/spreadsheets/d/e/2PACX-1vSq1GLbDENEZYWCjhdfY_lbazkfiEI6ISOffmP2QBOr_0gGAlRYaNc3uDQ22ZeHaaQa2UtOoXYDSYV2/pub?gid=1310443753&single=true&output=csv");
-    const garages = await loadCSV("https://docs.google.com/spreadsheets/d/e/2PACX-1vSq1GLbDENEZYWCjhdfY_lbazkfiEI6ISOffmP2QBOr_0gGAlRYaNc3uDQ22ZeHaaQa2UtOoXYDSYV2/pub?gid=1425443368&single=true&output=csv");
-    const trailers = await loadCSV("https://docs.google.com/spreadsheets/d/e/2PACX-1vSq1GLbDENEZYWCjhdfY_lbazkfiEI6ISOffmP2QBOr_0gGAlRYaNc3uDQ22ZeHaaQa2UtOoXYDSYV2/pub?gid=620180317&single=true&output=csv");
+    const trucks = await loadCSV("YOUR_TRUCKS_CSV_URL_HERE");
+    const drivers = await loadCSV("YOUR_DRIVERS_CSV_URL_HERE");
+    const garages = await loadCSV("YOUR_GARAGES_CSV_URL_HERE");
+    const trailers = await loadCSV("YOUR_TRAILERS_CSV_URL_HERE");
 
-    // === KPIs ===
     const totalIncome = trucks.reduce((sum,t) => sum + parseFloat(t["Monthly Income"]||0), 0);
     const avgFuel = trucks.reduce((sum,t) => sum + parseFloat(t["Fuel L/100km"]||0), 0) / (trucks.length || 1);
 
@@ -93,27 +87,23 @@
     document.getElementById("kpiGarages").innerText  = `🏢 Garages: ${garages.length}`;
     document.getElementById("kpiTrailers").innerText = `🚛 Trailers: ${trailers.length}`;
 
-    // === Charts with unique Truck ID + Model labels ===
-    const truckLabels = trucks.map(t => `${t["Truck ID"]} - ${t["Model"]}`);
+    const labels = trucks.map((t,i) => `${t["Model"]} #${i+1}`);
     const fuelCosts = trucks.map(t => parseFloat(t["Est Monthly Fuel Cost"]||0));
     const repairs = trucks.map(t => parseFloat(t["Repair / 12 (avg monthly)"]||0));
     const income = trucks.map(t => parseFloat(t["Monthly Income"]||0));
 
-    // Fuel chart
     new Chart(document.getElementById("fuelChart"), {
       type: "bar",
-      data: { labels: truckLabels, datasets: [{ label:"Fuel (€)", data:fuelCosts, backgroundColor:"#ff4444" }] },
+      data: { labels, datasets: [{ label:"Fuel (€)", data:fuelCosts, backgroundColor:"#ff4444" }] },
       options: { plugins:{legend:{labels:{color:"#f0f0f0"}}}, scales:{x:{ticks:{color:"#f0f0f0"}}, y:{ticks:{color:"#f0f0f0"}}}}
     });
 
-    // Repairs chart
     new Chart(document.getElementById("repairsChart"), {
       type: "bar",
-      data: { labels: truckLabels, datasets: [{ label:"Repairs (€)", data:repairs, backgroundColor:"#ffaa00" }] },
+      data: { labels, datasets: [{ label:"Repairs (€)", data:repairs, backgroundColor:"#ffaa00" }] },
       options: { plugins:{legend:{labels:{color:"#f0f0f0"}}}, scales:{x:{ticks:{color:"#f0f0f0"}}, y:{ticks:{color:"#f0f0f0"}}}}
     });
 
-    // Driver score radar
     new Chart(document.getElementById("driverScoreChart"), {
       type: "radar",
       data: {
@@ -128,15 +118,13 @@
       options: { plugins:{legend:{labels:{color:"#f0f0f0"}}}, scales:{r:{pointLabels:{color:"#f0f0f0"}, ticks:{color:"#f0f0f0"}}}}
     });
 
-    // Income chart
     new Chart(document.getElementById("incomeChart"), {
       type: "line",
-      data: { labels: truckLabels, datasets: [{ label:"Monthly Income (€)", data:income, borderColor:"#00ff66", backgroundColor:"rgba(0,255,102,0.2)" }] },
+      data: { labels, datasets: [{ label:"Monthly Income (€)", data:income, borderColor:"#00ff66", backgroundColor:"rgba(0,255,102,0.2)" }] },
       options: { plugins:{legend:{labels:{color:"#f0f0f0"}}}, scales:{x:{ticks:{color:"#f0f0f0"}}, y:{ticks:{color:"#f0f0f0"}}}}
     });
   }
 
-  // === Run the dashboard ===
   buildDashboard();
   </script>
 </body>
