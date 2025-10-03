@@ -72,10 +72,10 @@
   }
 
   async function buildDashboard() {
-    const trucks = await loadCSV("YOUR_TRUCKS_CSV_URL_HERE");
-    const drivers = await loadCSV("YOUR_DRIVERS_CSV_URL_HERE");
-    const garages = await loadCSV("YOUR_GARAGES_CSV_URL_HERE");
-    const trailers = await loadCSV("YOUR_TRAILERS_CSV_URL_HERE");
+    const trucks = await loadCSV("https://docs.google.com/spreadsheets/d/e/2PACX-1vSq1GLbDENEZYWCjhdfY_lbazkfiEI6ISOffmP2QBOr_0gGAlRYaNc3uDQ22ZeHaaQa2UtOoXYDSYV2/pub?gid=146602917&single=true&output=csv");
+    const drivers = await loadCSV("https://docs.google.com/spreadsheets/d/e/2PACX-1vSq1GLbDENEZYWCjhdfY_lbazkfiEI6ISOffmP2QBOr_0gGAlRYaNc3uDQ22ZeHaaQa2UtOoXYDSYV2/pub?gid=1310443753&single=true&output=csv");
+    const garages = await loadCSV("https://docs.google.com/spreadsheets/d/e/2PACX-1vSq1GLbDENEZYWCjhdfY_lbazkfiEI6ISOffmP2QBOr_0gGAlRYaNc3uDQ22ZeHaaQa2UtOoXYDSYV2/pub?gid=1425443368&single=true&output=csv");
+    const trailers = await loadCSV("https://docs.google.com/spreadsheets/d/e/2PACX-1vSq1GLbDENEZYWCjhdfY_lbazkfiEI6ISOffmP2QBOr_0gGAlRYaNc3uDQ22ZeHaaQa2UtOoXYDSYV2/pub?gid=620180317&single=true&output=csv");
 
     const totalIncome = trucks.reduce((sum,t) => sum + parseFloat(t["Monthly Income"]||0), 0);
     const avgFuel = trucks.reduce((sum,t) => sum + parseFloat(t["Fuel L/100km"]||0), 0) / (trucks.length || 1);
@@ -129,3 +129,4 @@
   </script>
 </body>
 </html>
+
