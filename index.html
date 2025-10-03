@@ -93,8 +93,8 @@
     document.getElementById("kpiGarages").innerText  = `🏢 Garages: ${garages.length}`;
     document.getElementById("kpiTrailers").innerText = `🚛 Trailers: ${trailers.length}`;
 
-    // === Charts ===
-    const labels = trucks.map(t => t["Model"]);
+    // === Charts with unique Truck ID + Model labels ===
+    const truckLabels = trucks.map(t => `${t["Truck ID"]} - ${t["Model"]}`);
     const fuelCosts = trucks.map(t => parseFloat(t["Est Monthly Fuel Cost"]||0));
     const repairs = trucks.map(t => parseFloat(t["Repair / 12 (avg monthly)"]||0));
     const income = trucks.map(t => parseFloat(t["Monthly Income"]||0));
@@ -102,14 +102,14 @@
     // Fuel chart
     new Chart(document.getElementById("fuelChart"), {
       type: "bar",
-      data: { labels, datasets: [{ label:"Fuel (€)", data:fuelCosts, backgroundColor:"#ff4444" }] },
+      data: { labels: truckLabels, datasets: [{ label:"Fuel (€)", data:fuelCosts, backgroundColor:"#ff4444" }] },
       options: { plugins:{legend:{labels:{color:"#f0f0f0"}}}, scales:{x:{ticks:{color:"#f0f0f0"}}, y:{ticks:{color:"#f0f0f0"}}}}
     });
 
     // Repairs chart
     new Chart(document.getElementById("repairsChart"), {
       type: "bar",
-      data: { labels, datasets: [{ label:"Repairs (€)", data:repairs, backgroundColor:"#ffaa00" }] },
+      data: { labels: truckLabels, datasets: [{ label:"Repairs (€)", data:repairs, backgroundColor:"#ffaa00" }] },
       options: { plugins:{legend:{labels:{color:"#f0f0f0"}}}, scales:{x:{ticks:{color:"#f0f0f0"}}, y:{ticks:{color:"#f0f0f0"}}}}
     });
 
@@ -131,7 +131,7 @@
     // Income chart
     new Chart(document.getElementById("incomeChart"), {
       type: "line",
-      data: { labels, datasets: [{ label:"Monthly Income (€)", data:income, borderColor:"#00ff66", backgroundColor:"rgba(0,255,102,0.2)" }] },
+      data: { labels: truckLabels, datasets: [{ label:"Monthly Income (€)", data:income, borderColor:"#00ff66", backgroundColor:"rgba(0,255,102,0.2)" }] },
       options: { plugins:{legend:{labels:{color:"#f0f0f0"}}}, scales:{x:{ticks:{color:"#f0f0f0"}}, y:{ticks:{color:"#f0f0f0"}}}}
     });
   }
@@ -141,4 +141,3 @@
   </script>
 </body>
 </html>
-
