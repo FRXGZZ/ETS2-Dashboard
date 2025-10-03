@@ -6,8 +6,8 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     body { 
-      background:#0d0d0d; 
-      color:#f0f0f0; 
+      background:#101217; 
+      color:#e0e0e0; 
       font-family:sans-serif; 
       margin:0; 
       padding:20px; 
@@ -17,71 +17,82 @@
     }
     h1 { 
       text-align:center; 
-      color:#00ffcc; 
+      color:#19ffd6; 
       margin-bottom:20px;
+      font-size: 2em;
     }
     .kpi {
-      background:#1a1a1a;
-      color:#00ffcc;
-      padding:20px;
+      background:#171a22;
+      color:#19ffd6;
+      padding:18px;
       border-radius:12px;
       margin:10px 0;
       width:90%;
+      max-width:700px;
       text-align:center;
-      font-size:1.4em;
-      box-shadow:0 0 10px rgba(0,255,204,0.3);
+      font-size:1.3em;
+      box-shadow:0 0 15px rgba(25,255,214,0.08);
+      border: 1.5px solid #19ffd6;
+      letter-spacing: 0.5px;
     }
     canvas { 
-      background:#1a1a1a; 
+      background:#191d26; 
       border-radius:12px; 
       margin:15px 0; 
       padding:15px; 
       width:90% !important; 
       max-width:800px; 
-      height:400px !important; 
-      box-shadow:0 0 15px rgba(0,0,0,0.5);
+      height:380px !important; 
+      box-shadow:0 0 15px rgba(25,255,214,0.12);
+      border: 1.5px solid #19ffd6;
     }
     table {
       width: 90%;
-      max-width: 900px;
+      max-width: 850px;
       border-collapse: collapse;
       margin-top: 30px;
-      background: #1a1a1a;
+      background: #171a22;
       border-radius: 12px;
       overflow: hidden;
-      box-shadow: 0 0 10px rgba(0,255,204,0.3);
+      box-shadow: 0 0 16px rgba(25,255,214,0.14);
+      margin-bottom:40px;
     }
     th, td {
-      border: 1px solid #00ffcc;
-      padding: 10px;
+      border: 1px solid #19ffd6;
+      padding: 11px 10px;
       text-align: left;
-      color: #00ffcc;
-      font-size: 0.9em;
+      color: #19ffd6;
+      font-size: 1.05em;
+      background: #191d25;
     }
     th {
-      background-color: #004d40;
+      background-color: #212230;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+    }
+    tr:nth-child(even) td {
+      background: #181924;
     }
     #map {
       margin-top: 40px;
       width: 90%;
       max-width: 900px;
       height: 400px;
-      background: #111;
+      background: #101217;
       border-radius: 12px;
-      box-shadow: 0 0 15px rgba(0, 255, 204, 0.3);
+      box-shadow: 0 0 16px rgba(25,255,214,0.12);
+      border: 2px solid #19ffd6;
       display: flex;
       align-items: center;
       justify-content: center;
-      color: #00ffcc;
+      color: #19ffd6;
       font-size: 1.2em;
       font-style: italic;
-      user-select: none;
     }
   </style>
 </head>
 <body>
-
-  <h1>🚛 FRXGZ Ultimate Company Dashboard 🚛</h1>
+  <h1>🚚 FRXGZ Ultimate Company Dashboard 🚚</h1>
   
   <div class="kpi" id="kpiTrucks">Loading trucks...</div>
   <div class="kpi" id="kpiDrivers">Loading drivers...</div>
@@ -95,14 +106,14 @@
   <canvas id="driverScoreChart"></canvas>
   <canvas id="incomeChart"></canvas>
 
-  <h2>Past Jobs (Transactions)</h2>
+  <h2 style="color:#19ffd6;margin-top:40px;">Past Jobs (Transactions)</h2>
   <table id="transactionsTable">
     <thead><tr id="transactionsHeader"></tr></thead>
     <tbody id="transactionsBody"></tbody>
   </table>
 
-  <h2>Visited Countries Map</h2>
-  <div id="map">Map visualization placeholder</div>
+  <h2 style="color:#19ffd6;margin-top:40px;margin-bottom:10px;">Visited Countries Map</h2>
+  <div id="map"></div>
 
   <script>
   // CSV URLs
@@ -111,6 +122,15 @@
   const garagesCSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSq1GLbDENEZYWCjhdfY_lbazkfiEI6ISOffmP2QBOr_0gGAlRYaNc3uDQ22ZeHaaQa2UtOoXYDSYV2/pub?gid=1425443368&single=true&output=csv";
   const trailersCSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSq1GLbDENEZYWCjhdfY_lbazkfiEI6ISOffmP2QBOr_0gGAlRYaNc3uDQ22ZeHaaQa2UtOoXYDSYV2/pub?gid=620180317&single=true&output=csv";
   const transactionsCSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSq1GLbDENEZYWCjhdfY_lbazkfiEI6ISOffmP2QBOr_0gGAlRYaNc3uDQ22ZeHaaQa2UtOoXYDSYV2/pub?gid=726275393&single=true&output=csv";
+
+  function formatEuro(val) {
+    let n = parseFloat(val.replace(/[^\d.-]/g,"")) || 0;
+    return "€" + n.toLocaleString();
+  }
+  function formatDistance(val) {
+    let n = parseInt(val.replace(/[^\d]/g,"")) || 0;
+    return n.toLocaleString() + " km";
+  }
 
   async function loadCSV(url) {
     const resp = await fetch(url);
@@ -127,16 +147,12 @@
   }
 
   function renderTable(data, tableId, headerId, bodyId) {
-    if (!data.length) {
-      document.getElementById(tableId).innerHTML = '<tr><td>No data found</td></tr>';
-      return;
-    }
+    if (!data.length) return;
 
     const headers = Object.keys(data[0]);
     const headerRow = document.getElementById(headerId);
     const tbody = document.getElementById(bodyId);
 
-    // Clear any existing
     headerRow.innerHTML = "";
     tbody.innerHTML = "";
 
@@ -150,7 +166,10 @@
       const tr = document.createElement('tr');
       headers.forEach(h => {
         const td = document.createElement('td');
-        td.textContent = row[h] || "";
+        let val = row[h] || "";
+        if (h.toLowerCase().includes("revenue")) val = formatEuro(val);
+        if (h.toLowerCase().includes("distance")) val = formatDistance(val);
+        td.textContent = val;
         tr.appendChild(td);
       });
       tbody.appendChild(tr);
@@ -158,7 +177,6 @@
   }
 
   async function buildDashboard() {
-    // Load CSV data
     const [trucks, drivers, garages, trailers, transactions] = await Promise.all([
       loadCSV(trucksCSV),
       loadCSV(driversCSV),
@@ -184,16 +202,28 @@
     const repairs = trucks.map(t => parseFloat(t["Repair / 12 (avg monthly)"] || 0));
     const income = trucks.map(t => parseFloat(t["Monthly Income"] || 0));
 
+    const axisColor = "#19ffd6";
+
     new Chart(document.getElementById("fuelChart"), {
       type: "bar",
-      data: { labels, datasets: [{ label: "Fuel (€)", data: fuelCosts, backgroundColor: "#ff4444" }] },
-      options: { plugins: { legend: { labels: { color: "#f0f0f0" } } }, scales: { x: { ticks: { color: "#f0f0f0" } }, y: { ticks: { color: "#f0f0f0" } } } }
+      data: { labels, datasets: [{ label: "Fuel (€)", data: fuelCosts, backgroundColor: "#3ed6ff", borderColor: "#19ffd6", borderWidth: 2 }] },
+      options: { 
+        plugins: { legend: { labels: { color: axisColor } } }, 
+        scales: { 
+          x: { ticks: { color: axisColor }, grid: { color: "#2e3540" } }, 
+          y: { beginAtZero:true, ticks:{ color: axisColor }, grid:{ color: "#2e3540" } }
+        }, 
+        backgroundColor: "#212230"
+      }
     });
 
     new Chart(document.getElementById("repairsChart"), {
       type: "bar",
-      data: { labels, datasets: [{ label: "Repairs (€)", data: repairs, backgroundColor: "#ffaa00" }] },
-      options: { plugins: { legend: { labels: { color: "#f0f0f0" } } }, scales: { x: { ticks: { color: "#f0f0f0" } }, y: { ticks: { color: "#f0f0f0" } } } }
+      data: { labels, datasets: [{ label: "Repairs (€)", data: repairs, backgroundColor: "#ffe066", borderColor:"#ffd700", borderWidth:2 }] },
+      options: { 
+        plugins: { legend: { labels: { color: axisColor } } }, 
+        scales: { x: { ticks: { color: axisColor }, grid: { color: "#2e3540" } }, y: { beginAtZero:true, ticks: { color: axisColor }, grid: { color: "#2e3540" } } }
+      }
     });
 
     new Chart(document.getElementById("driverScoreChart"), {
@@ -203,23 +233,26 @@
         datasets: [{
           label: "Driver Score",
           data: drivers.map(d => parseFloat(d["Driver Score (0-100)"] || 0)),
-          borderColor: "#ffaa00",
-          backgroundColor: "rgba(255,170,0,0.2)"
+          borderColor: "#ffe066",
+          backgroundColor: "rgba(255, 224, 102,0.25)"
         }]
       },
-      options: { plugins: { legend: { labels: { color: "#f0f0f0" } } }, scales: { r: { pointLabels: { color: "#f0f0f0" }, ticks: { color: "#f0f0f0" } } } }
+      options: { 
+        plugins: { legend: { labels: { color: axisColor } } }, 
+        scales: { r: { pointLabels: { color: axisColor }, angleLines: { color: axisColor }, grid:{ color: "#2e3540" }, ticks:{ color: axisColor } } } 
+      }
     });
 
     new Chart(document.getElementById("incomeChart"), {
       type: "line",
-      data: { labels, datasets: [{ label: "Monthly Income (€)", data: income, borderColor: "#00ff66", backgroundColor: "rgba(0,255,102,0.2)" }] },
-      options: { plugins: { legend: { labels: { color: "#f0f0f0" } } }, scales: { x: { ticks: { color: "#f0f0f0" } }, y: { ticks: { color: "#f0f0f0" } } } }
+      data: { labels, datasets: [{ label: "Monthly Income (€)", data: income, borderColor: "#19ffd6", backgroundColor: "rgba(25,255,214,0.16)" }] },
+      options: { 
+        plugins: { legend: { labels: { color: axisColor } } }, 
+        scales: { x: { ticks: { color: axisColor }, grid: { color: "#2e3540" } }, y: { beginAtZero:true, ticks: { color: axisColor }, grid: { color: "#2e3540" } } }
+      }
     });
 
-    // Render past jobs from transactions sheet in table
     renderTable(transactions, 'transactionsTable', 'transactionsHeader', 'transactionsBody');
-
-    // TODO: Implement your map visualization here
   }
 
   buildDashboard();
