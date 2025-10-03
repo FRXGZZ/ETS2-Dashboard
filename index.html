@@ -3,7 +3,6 @@
 <head>
   <meta charset="UTF-8" />
   <title>ETS2 Vertical Dashboard</title>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     body { 
       background:#101217; 
@@ -35,17 +34,6 @@
       border: 1.5px solid #19ffd6;
       letter-spacing: 0.5px;
     }
-    canvas { 
-      background:#191d26; 
-      border-radius:12px; 
-      margin:15px 0; 
-      padding:15px; 
-      width:90% !important; 
-      max-width:800px; 
-      height:380px !important; 
-      box-shadow:0 0 15px rgba(25,255,214,0.12);
-      border: 1.5px solid #19ffd6;
-    }
     table {
       width: 90%;
       max-width: 850px;
@@ -64,6 +52,7 @@
       color: #19ffd6;
       font-size: 1.05em;
       background: #191d25;
+      white-space: nowrap;
     }
     th {
       background-color: #212230;
@@ -101,11 +90,6 @@
   <div class="kpi" id="kpiGarages">Loading garages...</div>
   <div class="kpi" id="kpiTrailers">Loading trailers...</div>
 
-  <canvas id="fuelChart"></canvas>
-  <canvas id="repairsChart"></canvas>
-  <canvas id="driverScoreChart"></canvas>
-  <canvas id="incomeChart"></canvas>
-
   <h2 style="color:#19ffd6;margin-top:40px;">Past Jobs (Transactions)</h2>
   <table id="transactionsTable">
     <thead><tr id="transactionsHeader"></tr></thead>
@@ -124,12 +108,15 @@
   const transactionsCSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSq1GLbDENEZYWCjhdfY_lbazkfiEI6ISOffmP2QBOr_0gGAlRYaNc3uDQ22ZeHaaQa2UtOoXYDSYV2/pub?gid=726275393&single=true&output=csv";
 
   function formatEuro(val) {
+    if(!val) return "";
     let n = parseFloat(val.replace(/[^\d.-]/g,"")) || 0;
     return "€" + n.toLocaleString();
   }
   function formatDistance(val) {
+    if(!val) return "";
     let n = parseInt(val.replace(/[^\d]/g,"")) || 0;
-    return n.toLocaleString() + " km";
+    // Only add thousands separator if number is at least 1000
+    return n >= 1000 ? n.toLocaleString() + " km" : n + " km";
   }
 
   async function loadCSV(url) {
@@ -148,13 +135,10 @@
 
   function renderTable(data, tableId, headerId, bodyId) {
     if (!data.length) return;
-
     const headers = Object.keys(data[0]);
     const headerRow = document.getElementById(headerId);
     const tbody = document.getElementById(bodyId);
-
-    headerRow.innerHTML = "";
-    tbody.innerHTML = "";
+    headerRow.innerHTML = ""; tbody.innerHTML = "";
 
     headers.forEach(h => {
       const th = document.createElement('th');
@@ -168,7 +152,7 @@
         const td = document.createElement('td');
         let val = row[h] || "";
         if (h.toLowerCase().includes("revenue")) val = formatEuro(val);
-        if (h.toLowerCase().includes("distance")) val = formatDistance(val);
+        if (h.toLowerCase().includes("distance") || h.toLowerCase() === "distance (km)") val = formatDistance(val);
         td.textContent = val;
         tr.appendChild(td);
       });
@@ -177,6 +161,7 @@
   }
 
   async function buildDashboard() {
+    // Load CSV data for KPIs and jobs table
     const [trucks, drivers, garages, trailers, transactions] = await Promise.all([
       loadCSV(trucksCSV),
       loadCSV(driversCSV),
@@ -184,7 +169,6 @@
       loadCSV(trailersCSV),
       loadCSV(transactionsCSV)
     ]);
-
     // KPIs
     const totalIncome = trucks.reduce((sum, t) => sum + parseFloat(t["Monthly Income"] || 0), 0);
     const avgFuel = trucks.reduce((sum, t) => sum + parseFloat(t["Fuel L/100km"] || 0), 0) / (trucks.length || 1);
@@ -195,64 +179,9 @@
     document.getElementById("kpiFuel").innerText = `⛽ Avg Fuel Consumption: ${avgFuel.toFixed(2)} L/100km`;
     document.getElementById("kpiGarages").innerText = `🏢 Garages: ${garages.length}`;
     document.getElementById("kpiTrailers").innerText = `🚛 Trailers: ${trailers.length}`;
-
-    // Charts data
-    const labels = trucks.map((t, i) => `${t["Model"]} #${i+1}`);
-    const fuelCosts = trucks.map(t => parseFloat(t["Est Monthly Fuel Cost"] || 0));
-    const repairs = trucks.map(t => parseFloat(t["Repair / 12 (avg monthly)"] || 0));
-    const income = trucks.map(t => parseFloat(t["Monthly Income"] || 0));
-
-    const axisColor = "#19ffd6";
-
-    new Chart(document.getElementById("fuelChart"), {
-      type: "bar",
-      data: { labels, datasets: [{ label: "Fuel (€)", data: fuelCosts, backgroundColor: "#3ed6ff", borderColor: "#19ffd6", borderWidth: 2 }] },
-      options: { 
-        plugins: { legend: { labels: { color: axisColor } } }, 
-        scales: { 
-          x: { ticks: { color: axisColor }, grid: { color: "#2e3540" } }, 
-          y: { beginAtZero:true, ticks:{ color: axisColor }, grid:{ color: "#2e3540" } }
-        }, 
-        backgroundColor: "#212230"
-      }
-    });
-
-    new Chart(document.getElementById("repairsChart"), {
-      type: "bar",
-      data: { labels, datasets: [{ label: "Repairs (€)", data: repairs, backgroundColor: "#ffe066", borderColor:"#ffd700", borderWidth:2 }] },
-      options: { 
-        plugins: { legend: { labels: { color: axisColor } } }, 
-        scales: { x: { ticks: { color: axisColor }, grid: { color: "#2e3540" } }, y: { beginAtZero:true, ticks: { color: axisColor }, grid: { color: "#2e3540" } } }
-      }
-    });
-
-    new Chart(document.getElementById("driverScoreChart"), {
-      type: "radar",
-      data: {
-        labels: drivers.map(d => d["Name"]),
-        datasets: [{
-          label: "Driver Score",
-          data: drivers.map(d => parseFloat(d["Driver Score (0-100)"] || 0)),
-          borderColor: "#ffe066",
-          backgroundColor: "rgba(255, 224, 102,0.25)"
-        }]
-      },
-      options: { 
-        plugins: { legend: { labels: { color: axisColor } } }, 
-        scales: { r: { pointLabels: { color: axisColor }, angleLines: { color: axisColor }, grid:{ color: "#2e3540" }, ticks:{ color: axisColor } } } 
-      }
-    });
-
-    new Chart(document.getElementById("incomeChart"), {
-      type: "line",
-      data: { labels, datasets: [{ label: "Monthly Income (€)", data: income, borderColor: "#19ffd6", backgroundColor: "rgba(25,255,214,0.16)" }] },
-      options: { 
-        plugins: { legend: { labels: { color: axisColor } } }, 
-        scales: { x: { ticks: { color: axisColor }, grid: { color: "#2e3540" } }, y: { beginAtZero:true, ticks: { color: axisColor }, grid: { color: "#2e3540" } } }
-      }
-    });
-
+    // Table
     renderTable(transactions, 'transactionsTable', 'transactionsHeader', 'transactionsBody');
+    // Map section is ready for implementation  
   }
 
   buildDashboard();
