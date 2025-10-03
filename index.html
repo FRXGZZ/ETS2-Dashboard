@@ -77,10 +77,10 @@
   // === Build Dashboard ===
   async function buildDashboard() {
     // 👇 Your real Google Sheets CSV links
-    const trucks = await loadCSV("https://docs.google.com/spreadsheets/d/e/2PACX-1vQ1EKJLZDK89CZ450PamnZQKpEmQMy6esrEdeU3w-SLrBHG0ENGnMOIw07NzUBIKw/pub?gid=146602917&single=true&output=csv");
-    const drivers = await loadCSV("https://docs.google.com/spreadsheets/d/e/2PACX-1vQ1EKJLZDK89CZ450PamnZQKpEmQMy6esrEdeU3w-SLrBHG0ENGnMOIw07NzUBIKw/pub?gid=1310443753&single=true&output=csv");
-    const garages = await loadCSV("https://docs.google.com/spreadsheets/d/e/2PACX-1vQ1EKJLZDK89CZ450PamnZQKpEmQMy6esrEdeU3w-SLrBHG0ENGnMOIw07NzUBIKw/pub?gid=1425443368&single=true&output=csv");
-    const trailers = await loadCSV("https://docs.google.com/spreadsheets/d/e/2PACX-1vQ1EKJLZDK89CZ450PamnZQKpEmQMy6esrEdeU3w-SLrBHG0ENGnMOIw07NzUBIKw/pub?gid=620180317&single=true&output=csv");
+    const trucks = await loadCSV("https://docs.google.com/spreadsheets/d/e/2PACX-1vSq1GLbDENEZYWCjhdfY_lbazkfiEI6ISOffmP2QBOr_0gGAlRYaNc3uDQ22ZeHaaQa2UtOoXYDSYV2/pub?gid=146602917&single=true&output=csv");
+    const drivers = await loadCSV("https://docs.google.com/spreadsheets/d/e/2PACX-1vSq1GLbDENEZYWCjhdfY_lbazkfiEI6ISOffmP2QBOr_0gGAlRYaNc3uDQ22ZeHaaQa2UtOoXYDSYV2/pub?gid=1310443753&single=true&output=csv");
+    const garages = await loadCSV("https://docs.google.com/spreadsheets/d/e/2PACX-1vSq1GLbDENEZYWCjhdfY_lbazkfiEI6ISOffmP2QBOr_0gGAlRYaNc3uDQ22ZeHaaQa2UtOoXYDSYV2/pub?gid=1425443368&single=true&output=csv");
+    const trailers = await loadCSV("https://docs.google.com/spreadsheets/d/e/2PACX-1vSq1GLbDENEZYWCjhdfY_lbazkfiEI6ISOffmP2QBOr_0gGAlRYaNc3uDQ22ZeHaaQa2UtOoXYDSYV2/pub?gid=620180317&single=true&output=csv");
 
     // === KPIs ===
     const totalIncome = trucks.reduce((sum,t) => sum + parseFloat(t["Monthly Income"]||0), 0);
@@ -141,3 +141,4 @@
   </script>
 </body>
 </html>
+
